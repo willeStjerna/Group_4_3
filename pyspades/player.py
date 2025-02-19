@@ -1156,90 +1156,114 @@ class ServerConnection(BaseConnection):
         saved_loaders.append(generated_data)
 
     def grenade_exploded(self, grenade: world.Grenade, branch_coverage: dict) -> dict:
+        print("\n=== GRENADE EXPLODED: START ===")
+        print(f"Player: {self.name} (ID: {self.player_id}) | Team: {self.team} | HP: {self.hp}")
+        print(f"Grenade Position: (x={grenade.position.x}, y={grenade.position.y}, z={grenade.position.z})")
+        print(f"Grenade Team: {grenade.team}")
 
-        # Branch 1 (True) - name/spectator check
+        # Branch 1 - Name/Spectator check
         if self.name is None or self.team.spectator:
             branch_coverage[1] = True
+            print("Branch 1 Taken: Player has no name or is a spectator. Exiting early.")
             return branch_coverage
-        else:  # Branch 2 (False)
+        else:
             branch_coverage[2] = True
+            print("Branch 2 Taken: Player is active (not a spectator).")
 
-        # Branch 3 (True) - enemy grenade check
+        # Branch 3 - Enemy grenade check
         if grenade.team is not None and grenade.team is not self.team:
             branch_coverage[3] = True
+            print("Branch 3 Taken: Grenade belongs to an enemy team. Exiting early.")
             return branch_coverage
-        else:  # Branch 4 (False)
+        else:
             branch_coverage[4] = True
+            print("Branch 4 Taken: Grenade is friendly or neutral.")
 
         position = grenade.position
         x, y, z = position.x, position.y, position.z
 
-        # Branch 5 (True) - out of bounds check
+        # Branch 5 - Out of bounds check
         if x < 0 or x > 512 or y < 0 or y > 512 or z < 0 or z > 63:
             branch_coverage[5] = True
+            print(f"Branch 5 Taken: Grenade exploded out of bounds (x={x}, y={y}, z={z}). Exiting early.")
             return branch_coverage
-        else:  # Branch 6 (False)
+        else:
             branch_coverage[6] = True
+            print(f"Branch 6 Taken: Grenade exploded within valid bounds (x={x}, y={y}, z={z}).")
 
         x, y, z = int(math.floor(x)), int(math.floor(y)), int(math.floor(z))
 
         for player_list in (self.team.other.get_players(), (self,)):
             for player in player_list:
-                # Branch 7 (True) - dead player check
+                # Branch 7 - Dead player check
                 if not player.hp:
                     branch_coverage[7] = True
+                    print(f"Branch 7 Taken: Skipping player {player.name} (ID: {player.player_id}) as they are already dead.")
                     continue
-                else:  # Branch 8 (False)
+                else:
                     branch_coverage[8] = True
+                    print(f"Branch 8 Taken: Processing player {player.name} (ID: {player.player_id}).")
 
                 damage = grenade.get_damage(player.world_object.position)
 
-                # Branch 9 (True) - no damage check
+                # Branch 9 - No damage check
                 if damage == 0:
                     branch_coverage[9] = True
+                    print(f"Branch 9 Taken: Grenade caused no damage to {player.name}.")
                     continue
-                else:  # Branch 10 (False)
+                else:
                     branch_coverage[10] = True
+                    print(f"Branch 10 Taken: Grenade deals {damage} damage to {player.name}.")
 
                 self.on_unvalidated_hit(damage, player, GRENADE_KILL, grenade)
                 returned = self.on_hit(damage, player, GRENADE_KILL, grenade)
 
-                # Branch 11 (True) - false return
+                # Branch 11 - False return
                 if returned == False:
                     branch_coverage[11] = True
+                    print(f"Branch 11 Taken: on_hit() returned False for {player.name}. Skipping further processing.")
                     continue
-                else:  # Branch 12 (False)
+                else:
                     branch_coverage[12] = True
-                    # Branch 13 (True) - non-None return
+                    print(f"Branch 12 Taken: on_hit() did not return False for {player.name}. Continuing.")
+
+                    # Branch 13 - Non-None return
                     if returned is not None:
                         branch_coverage[13] = True
                         damage = returned
-                    else:  # Branch 14 (False)
+                        print(f"Branch 13 Taken: on_hit() returned {damage} new damage value for {player.name}.")
+                    else:
                         branch_coverage[14] = True
+                        print(f"Branch 14 Taken: on_hit() returned None, keeping original damage.")
 
                 player.set_hp(player.hp - damage, self,
                             hit_indicator=position.get(), kill_type=GRENADE_KILL,
                             grenade=grenade)
+                print(f"{player.name} now has {player.hp} HP left.")
 
-        # Branch 15 (True) - block destroy prevented
+        # Branch 15 - Block destroy prevented
         if self.on_block_destroy(x, y, z, GRENADE_DESTROY) == False:
             branch_coverage[15] = True
+            print(f"Branch 15 Taken: Block destruction at ({x}, {y}, {z}) was prevented. Exiting early.")
             return branch_coverage
-        else:  # Branch 16 (False)
+        else:
             branch_coverage[16] = True
+            print(f"Branch 16 Taken: Block destruction allowed at ({x}, {y}, {z}).")
 
         map = self.protocol.map
 
         for n_x, n_y, n_z in product(range(x - 1, x + 2), range(y - 1, y + 2), range(z - 1, z + 2)):
             count = map.destroy_point(n_x, n_y, n_z)
-            
-            # Branch 17 (True) - blocks destroyed
+
+            # Branch 17 - Blocks destroyed
             if count:
                 branch_coverage[17] = True
                 self.total_blocks_removed += count
                 self.on_block_removed(n_x, n_y, n_z)
-            else:  # Branch 18 (False)
+                print(f"Branch 17 Taken: Destroyed {count} blocks at ({n_x}, {n_y}, {n_z}).")
+            else:
                 branch_coverage[18] = True
+                print(f"Branch 18 Taken: No blocks destroyed at ({n_x}, {n_y}, {n_z}).")
 
         block_action = loaders.BlockAction()
         block_action.x = x
@@ -1250,6 +1274,7 @@ class ServerConnection(BaseConnection):
         self.protocol.broadcast_contained(block_action, save=True)
         self.protocol.update_entities()
 
+        print("\n=== GRENADE EXPLODED: END ===\n")
         return branch_coverage
 
 
