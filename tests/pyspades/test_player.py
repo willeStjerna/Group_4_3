@@ -2,10 +2,14 @@
 test pyspades/test_grenade_explosion.py
 """
 from twisted.trial import unittest
-from unittest.mock import Mock
+from twisted.internet import reactor
+from unittest.mock import Mock, MagicMock, patch
 from pyspades import player, server, contained, world
 from pyspades.team import Team
 from pyspades.constants import GRENADE_KILL, GRENADE_DESTROY
+from pyspades import contained as loaders
+from pyspades.constants import *
+from pyspades.common import Vertex3
 
 
 class BaseConnectionTest(unittest.TestCase):
@@ -173,3 +177,118 @@ class GrenadeExplosionTest(unittest.TestCase):
         # living_player should have taken damage
         living_player.set_hp.assert_called_once()
 
+
+
+class TestOnBlockLineRecieved(unittest.TestCase):
+    def setUp(self):
+        # Set up a player-scenario that passes by itself
+
+        # Create a mock protocol and associated mocks
+        self.mock_protocol = MagicMock()
+        self.mock_map = MagicMock()
+        self.mock_protocol.map = self.mock_map
+        self.mock_protocol.update_entities = MagicMock()
+        self.mock_protocol.broadcast_contained = MagicMock()
+
+        # Barebones player
+        self.player = player.ServerConnection(self.mock_protocol, Mock())
+        self.player.player_id = 10
+        self.player.tool = BLOCK_TOOL
+        self.player.blocks = 50
+        self.player.hp = 100  # "alive"
+        self.player.line_build_start_pos = Vertex3(10, 10, 10)
+
+        # Mock the world_object so it passes
+        self.player.world_object = MagicMock()
+        self.player.world_object.position = Vertex3(12, 10, 10)
+
+        # Make sure these pass
+        self.mock_map.is_valid_position.return_value = True
+        self.mock_map.has_neighbors.return_value = True
+        self.mock_map.get_solid.return_value = 0
+        self.mock_map.build_point.return_value = True
+
+    # make this patch so that points in on_block_recieved gets good values
+    @patch('pyspades.world.cube_line', return_value=[(10, 10, 10), (11, 10, 10), (12, 10, 10)])
+    def test_dead_player_returns_immediately(self, mock_cube_line):
+        """
+        # Requirement 1. If the player is dead (self.hp < 0) it should return.
+        Checks that it does not call update_entities
+        """
+        contained = loaders.BlockLine()
+        contained.x1, contained.y1, contained.z1 = (10, 10, 10)
+        contained.x2, contained.y2, contained.z2 = (12, 10, 10)
+
+        self.player.hp = 0  # "dead"
+
+        self.player.on_block_line_recieved(contained)
+        self.mock_protocol.update_entities.assert_not_called()
+
+    # make this patch so that points in on_block_recieved gets good values
+    @patch('pyspades.world.cube_line', return_value=[(10, 10, 10), (11, 10, 10), (12, 10, 10)])
+    def test_no_start_position_returns_immediately(self, mock_cube_line):
+        """
+        # Requirement 2. If the line build start position is not set (self.line_build_start_pos is None) it should return.
+        Checks that it does not call update_entities
+        """
+        contained = loaders.BlockLine()
+        contained.x1, contained.y1, contained.z1 = (10, 10, 10)
+        contained.x2, contained.y2, contained.z2 = (12, 10, 10)
+
+        self.player.line_build_start_pos = None
+
+        self.player.on_block_line_recieved(contained)
+        self.mock_protocol.update_entities.assert_not_called()
+
+
+    @patch('twisted.internet.reactor.seconds', return_value=10)
+    def test_rapid_hack_detection(self, mock_seconds):
+        """
+        Requirement #3: 3. If a rapid hack is detected it should return.
+        We simulate a call that came in just after the last one and check if 'record_event' is invoked
+        and that it does not call update_entities.
+        """
+        contained = loaders.BlockLine()
+        contained.x1, contained.y1, contained.z1 = (10, 10, 10)
+        contained.x2, contained.y2, contained.z2 = (12, 10, 10)
+
+        self.player.last_block = 10
+        self.player.rapid_hack_detect = True
+        self.player.rapids = MagicMock()
+        self.player.rapids.above_limit.return_value = False
+
+        # Two calls in rapid succession should trigger it.
+        self.player.on_block_line_recieved(contained)
+
+        self.player.rapids.record_event.assert_called_once()
+        self.mock_protocol.update_entities.assert_not_called()
+
+    # make this patch so that points in on_block_recieved gets good values
+    @patch('pyspades.world.cube_line', return_value=[(10, 10, 10), (11, 10, 10), (12, 10, 10)])
+    def test_not_in_range_of_start_or_end_returns_immediately(self, mock_cube_line):
+        """
+        # Requirement 5. If the player is not in range of start or end pos of the block it should return.
+        Checks that it does not call update_entities
+        """
+        contained = loaders.BlockLine()
+        contained.x1, contained.y1, contained.z1 = (10, 10, 10)
+        contained.x2, contained.y2, contained.z2 = (12, 10, 10)
+
+        self.player.world_object.position.x = 1000
+
+        self.player.on_block_line_recieved(contained)
+        self.mock_protocol.update_entities.assert_not_called()
+
+    # make this patch so that points in on_block_recieved gets good values
+    @patch('pyspades.world.cube_line', return_value=[(10, 10, 10), (11, 10, 10), (12, 10, 10)])
+    def test_on_block_line_recieved_good_inputs(self, mock_cube_line):
+        """
+        # Requirement 12. It should update the entities.
+        Checks that it calls update_entities when given good inputs
+        """
+        contained = loaders.BlockLine()
+        contained.x1, contained.y1, contained.z1 = (10, 10, 10)
+        contained.x2, contained.y2, contained.z2 = (12, 10, 10)
+
+        self.player.on_block_line_recieved(contained)
+        self.mock_protocol.update_entities.assert_called_once()

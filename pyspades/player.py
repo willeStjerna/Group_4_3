@@ -568,7 +568,7 @@ class ServerConnection(BaseConnection):
         3. If a rapid hack is detected it should return.
         4. If positions (contained.x1, contained.y1, contained.z1) and (contained.x2, contained.y2, contained.z2)
             are not valid it should return.
-        5. If the player is not in range of start and end pos of the block it should return.
+        5. If the player is not in range of start or end pos of the block it should return.
         6. If the choose blocks does not have neighbors it should return.
         7. If the no line should be drawn it should return.
         8. If the number of blocks is too large it should return.
