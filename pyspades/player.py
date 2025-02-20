@@ -1156,44 +1156,72 @@ class ServerConnection(BaseConnection):
         saved_loaders.append(generated_data)
 
     def grenade_exploded(self, grenade: world.Grenade) -> None:
+        """
+        Requirements for this function:
+        1. If the player has no name or is a spectator, the grenade explosion is ignored.
+        2. If the grenade is from an enemy team, it is ignored.
+        3. The grenade must be within valid map boundaries.
+        4. If a player is dead, they should not take damage.
+        5. If a grenade does no damage, the player remains unaffected.
+        6. The on_hit function can modify the grenade’s damage before applying it.
+        7. The grenade should properly update the game state (block destruction, entity updates).
+        """
+
+        # Requirement 1: Ignore grenades from spectators or unnamed players
         if self.name is None or self.team.spectator:
             return
+
+        # Requirement 2: Check that player who throws grenade is on grenade.team
         if grenade.team is not None and grenade.team is not self.team:
             # could happen if the player changed team
             return
+
         position = grenade.position
-        x = position.x
-        y = position.y
-        z = position.z
+        x, y, z = position.x, position.y, position.z
+
+        # Requirement 3: Ignore grenades that explode outside the valid map range
         if x < 0 or x > 512 or y < 0 or y > 512 or z < 0 or z > 63:
             return
-        x = int(math.floor(x))
-        y = int(math.floor(y))
-        z = int(math.floor(z))
+
+        x, y, z = int(math.floor(x)), int(math.floor(y)), int(math.floor(z))
+
         for player_list in (self.team.other.get_players(), (self,)):
             for player in player_list:
+                # Requirement 4: Skip dead players
                 if not player.hp:
                     continue
+
                 damage = grenade.get_damage(player.world_object.position)
+
+                # Requirement 5: Skip cases where the grenade does no damage
                 if damage == 0:
                     continue
+
+                # Requirement 6: Allow on_hit function to modify the damage
                 self.on_unvalidated_hit(damage, player, GRENADE_KILL, grenade)
                 returned = self.on_hit(damage, player, GRENADE_KILL, grenade)
+
                 if returned == False:
                     continue
                 elif returned is not None:
                     damage = returned
+
                 player.set_hp(player.hp - damage, self,
-                              hit_indicator=position.get(), kill_type=GRENADE_KILL,
-                              grenade=grenade)
+                            hit_indicator=position.get(), kill_type=GRENADE_KILL,
+                            grenade=grenade)
+
+        # Requirement 7: Ensure game state is updated (block destruction and entity updates)
         if self.on_block_destroy(x, y, z, GRENADE_DESTROY) == False:
             return
+
+        # Destroy blocks within the explosion radius and track how many were removed
         map = self.protocol.map
         for n_x, n_y, n_z in product(range(x - 1, x + 2), range(y - 1, y + 2), range(z - 1, z + 2)):
             count = map.destroy_point(n_x, n_y, n_z)
             if count:
                 self.total_blocks_removed += count
                 self.on_block_removed(n_x, n_y, n_z)
+
         block_action = loaders.BlockAction()
         block_action.x = x
         block_action.y = y
