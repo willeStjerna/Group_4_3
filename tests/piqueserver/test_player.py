@@ -5,7 +5,7 @@ test piqueserver/server.py
 from twisted.trial import unittest
 from unittest.mock import Mock
 import piqueserver.player
-from pyspades.constants import DESTROY_BLOCK, SPADE_DESTROY, GRENADE_DESTROY
+from pyspades.constants import DESTROY_BLOCK, GRENADE_DESTROY
 
 class TestPlayer(unittest.TestCase):
     def setUp(self):
@@ -55,3 +55,7 @@ class TestPlayer(unittest.TestCase):
         # Reset default attribute values
         self.player.god = False
         self.protocol.map_info.on_block_destroy = None
+        
+        # Test for GRENADE_DESTROY mode with indestructable returning False
+        result = self.player.on_block_destroy(0, 0, 0, GRENADE_DESTROY)
+        self.assertFalse(result)
