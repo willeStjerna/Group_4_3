@@ -44,61 +44,107 @@ def move(connection, *args):
     """
     do_move(connection, args)
 
+def do_move(connection, args, silent=False, branch_coverage=None):
 
-def do_move(connection, args, silent=False):
     position = None
     player = None
     arg_count = len(args)
 
-    initial_index = 1 if arg_count == 2 or arg_count == 4 else 0
+    # 1a
+    if arg_count == 2 or arg_count == 4:  
+        initial_index = 1
+        branch_coverage["init_index_1"] = True
+    # 1b
+    else:  
+        initial_index = 0
+        branch_coverage["init_index_0"] = True
 
-    # the target position is a <sector>
-    if arg_count == 1 or arg_count == 2:
+    # 2a
+    if arg_count == 1 or arg_count == 2:  
+        branch_coverage["target_sector"] = True
         x, y = coordinates(args[initial_index])
         x += 32
         y += 32
         z = connection.protocol.map.get_height(x, y) - 2
         position = args[initial_index].upper()
-    # the target position is <x> <y> <z>
-    elif arg_count == 3 or arg_count == 4:
+    # 2b
+    elif arg_count == 3 or arg_count == 4:  
+        branch_coverage["target_coordinates"] = True
         x = min(max(0, int(args[initial_index])), 511)
         y = min(max(0, int(args[initial_index + 1])), 511)
         z = min(max(0, int(args[initial_index + 2])),
                 connection.protocol.map.get_height(x, y) - 2)
         position = '%d %d %d' % (x, y, z)
-    else:
+    # 2c
+    else:  
+        branch_coverage["error_invalid_params"] = True
         raise ValueError('Wrong number of parameters!')
 
-    # no player specified
-    if arg_count == 1 or arg_count == 3:
-        # must be run by a player in this case because moving self
-        if connection not in connection.protocol.players.values():
+    # 3a
+    if arg_count == 1 or arg_count == 3:  
+        branch_coverage["move_self"] = True
+        # 3b
+        if connection not in connection.protocol.players.values():  
+            branch_coverage["error_requires_player"] = True
             raise ValueError("Both player and target player are required")
+        # 3e
+        else:  
+            branch_coverage["player_exists"] = True
         player = connection.name
-    # player specified
-    elif arg_count == 2 or arg_count == 4:
-        if not (connection.admin or connection.rights.move_others):
+    # 3c
+    elif arg_count == 2 or arg_count == 4:  
+        branch_coverage["move_other"] = True
+        # 3d
+        if not (connection.admin or connection.rights.move_others):  
+            branch_coverage["error_permission_denied"] = True
             raise PermissionDenied(
                 "moving other players requires the move_others right")
+        # 3f
+        else:  
+            branch_coverage["permission_granted"] = True
         player = args[0]
+    # 3g
+    else:  
+        branch_coverage["error_invalid_arg_count"] = True
+        raise ValueError("Invalid argument count provided")
 
     player = get_player(connection.protocol, player)
 
-    silent = connection.invisible or silent
+    # 4a
+    if connection.invisible:  
+        branch_coverage["evaluate_silent_true"] = True
+        silent = True
+    # 4b
+    else:  
+        branch_coverage["evaluate_silent_false"] = True
+        silent = silent
 
     player.set_location((x, y, z))
-    if connection is player:
+
+    # 5a
+    if connection is player:  
+        branch_coverage["set_location_self"] = True
         message = ('%s ' + ('silently ' if silent else '') + 'teleported to '
                    'location %s')
         message = message % (player.name, position)
-    else:
+    # 5b
+    else:  
+        branch_coverage["set_location_other"] = True
         message = ('%s ' + ('silently ' if silent else '') + 'teleported %s '
                    'to location %s')
         message = message % (connection.name, player.name, position)
-    if silent:
+
+    # 6a
+    if silent:  
+        branch_coverage["silent_message"] = True
         connection.protocol.irc_say('* ' + message)
-    else:
+    # 6b
+    else:  
+        branch_coverage["broadcast_message"] = True
         connection.protocol.broadcast_chat(message, irc=True)
+
+
+
 
 
 @command(admin_only=True)
