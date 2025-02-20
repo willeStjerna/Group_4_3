@@ -39,7 +39,7 @@ class TestOnBlockLineRecieved(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Initialize branch coverage before running tests."""
-        cls.branch_coverage = {i: False for i in range(1, 19)}
+        cls.branch_coverage = {i: False for i in range(1, 30)}
 
     def setUp(self):
         # Set up a player-scenario that passes by itself
@@ -78,25 +78,15 @@ class TestOnBlockLineRecieved(unittest.TestCase):
         contained.x2, contained.y2, contained.z2 = (12, 10, 10)
 
         # Execute the code under test
-        self.player.on_block_line_recieved(contained)
+        TestOnBlockLineRecieved.branch_coverage = self.player.on_block_line_recieved(
+            contained, TestOnBlockLineRecieved.branch_coverage
+        )
 
         # Finally, verify we updated entities after building
         self.mock_protocol.update_entities.assert_called_once()
 
-    # def test_on_block_line_recieved_good_inputs(self):
-    #     """Test grenade explosion and track branch coverage."""
-    #     contained = loaders.BlockLine()
-    #     contained.x1, contained.y1, contained.z1 = (10, 10, 10)
-    #     contained.x2, contained.y2, contained.z2 = (12, 10, 10)
-    #
-    #     # Execute the code under test
-    #     TestOnBlockLineRecieved.branch_coverage = self.player.on_block_line_recieved(
-    #         contained, TestOnBlockLineRecieved.branch_coverage
-    #     )
-    #
-    #     self.assertTrue(any(TestOnBlockLineRecieved.branch_coverage.values()),
-    #                     "No branches were covered.")
-
+        self.assertTrue(any(TestOnBlockLineRecieved.branch_coverage.values()),
+                        "No branches were covered.")
 
     @classmethod
     def tearDownClass(cls):
@@ -104,6 +94,13 @@ class TestOnBlockLineRecieved(unittest.TestCase):
         print("\nBranch Coverage Report:")
         for branch, hit in cls.branch_coverage.items():
             print(f"Branch {branch}: {'Covered' if hit else 'Not Covered'}")
+        covered_count = sum(1 for hit in cls.branch_coverage.values() if hit)
+        coverage_percentage = (covered_count * 100) // 30
+        print(f"\nTotal covered: {covered_count} out of 30")
+        print(f"Coverage: {coverage_percentage}%")
+
+
+
 
 if __name__ == "__main__":
     unittest.main()
