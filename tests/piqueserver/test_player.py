@@ -45,8 +45,8 @@ class TestPlayer(unittest.TestCase):
         self.player.building = True
         self.player.god = False
     
-    def test_on_block_destroy(self): 
-        # Test for map_info.on_block_destroy returning True
+    # Test for map_info.on_block_destroy returning True
+    def test_map_info_on_block_destroy(self): 
         self.protocol.map_info.on_block_destroy = Mock(return_value=True)
         self.player.god = True
         result = self.player.on_block_destroy(0, 0, 0, DESTROY_BLOCK)
@@ -56,7 +56,8 @@ class TestPlayer(unittest.TestCase):
         self.player.god = False
         self.protocol.map_info.on_block_destroy = None
         
-        # Test for GRENADE_DESTROY mode with indestructable returning False
+    # Test for GRENADE_DESTROY mode with indestructable returning False
+    def test_on_block_destroy_grenade_indestructable(self):
         # Make (0,0,0) indestructible
         def is_indestructable(x, y, z):
             return x == 0 and y == 0 and z == 0
