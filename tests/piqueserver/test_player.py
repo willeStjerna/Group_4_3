@@ -45,6 +45,18 @@ class TestPlayer(unittest.TestCase):
         self.player.building = True
         self.player.god = False
     
+    def test_on_block_destroy(self): 
+        # Test branch 1
+        self.protocol.map_info.on_block_destroy = Mock(return_value=True)
+        self.player.god = True
+        result = self.player.on_block_destroy(0, 0, 0, DESTROY_BLOCK)
+        self.assertIsNone(result)
+        self.assertTrue(piqueserver.player.branch_coverage['on_block_destroy'][1])
+        
+        # Reset default attribute values
+        self.player.god = False
+        self.protocol.map_info.on_block_destroy = None
+    
     @classmethod
     def tearDownClass(cls):
         piqueserver.player.print_coverage_report()
