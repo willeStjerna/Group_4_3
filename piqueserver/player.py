@@ -23,6 +23,22 @@ HookValue = Optional[bool]
 
 log = Logger()
 
+# Coverage tracking data structure
+branch_coverage = {
+    'on_block_destroy': {
+        1: False,  # map_on_block_destroy check
+        2: False,  # result check
+        3: False,  # building check
+        4: False,  # god check
+        5: False,  # protocol.building check
+        6: False,  # DESTROY_BLOCK mode
+        7: False,  # indestructable in DESTROY_BLOCK
+        8: False,  # SPADE_DESTROY mode
+        9: False,  # indestructable in SPADE_DESTROY
+        10: False, # GRENADE_DESTROY mode
+        11: False, # indestructable in GRENADE_DESTROY
+    }
+}
 
 class FeatureConnection(ServerConnection):
     def __init__(self, *args, **kwargs):
@@ -175,28 +191,42 @@ class FeatureConnection(ServerConnection):
     def on_block_destroy(self, x: int, y: int, z: int, mode: int) -> bool:
         map_on_block_destroy = self.protocol.map_info.on_block_destroy
         if map_on_block_destroy is not None:
+            branch_coverage['on_block_destroy'][1] = True
             result = map_on_block_destroy(self, x, y, z, mode)
             if not result:
+                branch_coverage['on_block_destroy'][2] = True
                 return result
+        
         if not self.building:
+            branch_coverage['on_block_destroy'][3] = True
             return False
+        
         if not self.god:
+            branch_coverage['on_block_destroy'][4] = True
             if not self.protocol.building:
+                branch_coverage['on_block_destroy'][5] = True
                 return False
+            
             is_indestructable = self.protocol.is_indestructable
             if mode == DESTROY_BLOCK:
+                branch_coverage['on_block_destroy'][6] = True
                 if is_indestructable(x, y, z):
+                    branch_coverage['on_block_destroy'][7] = True
                     return False
             elif mode == SPADE_DESTROY:
+                branch_coverage['on_block_destroy'][8] = True
                 if (is_indestructable(x, y, z) or
                         is_indestructable(x, y, z + 1) or
                         is_indestructable(x, y, z - 1)):
+                    branch_coverage['on_block_destroy'][9] = True
                     return False
             elif mode == GRENADE_DESTROY:
+                branch_coverage['on_block_destroy'][10] = True
                 for nade_x in range(x - 1, x + 2):
                     for nade_y in range(y - 1, y + 2):
                         for nade_z in range(z - 1, z + 2):
                             if is_indestructable(nade_x, nade_y, nade_z):
+                                branch_coverage['on_block_destroy'][11] = True
                                 return False
 
     def on_block_removed(self, x: int, y: int, z: int) -> None:
@@ -423,3 +453,19 @@ class FeatureConnection(ServerConnection):
         if self.name is not None:
             log.info('{name} timed out', name=self.printable_name)
         ServerConnection.timed_out(self)
+
+# Function to print coverage report
+def print_coverage_report():
+    print("\nBranch Coverage Report for on_block_destroy:")
+    print("-" * 50)
+    total_branches = len(branch_coverage['on_block_destroy'])
+    covered_branches = sum(1 for covered in branch_coverage['on_block_destroy'].values() if covered)
+    
+    print(f"Total branches: {total_branches}")
+    print(f"Covered branches: {covered_branches}")
+    print(f"Coverage percentage: {(covered_branches/total_branches)*100:.2f}%")
+    print("\nDetailed branch coverage:")
+    
+    for branch_id, covered in branch_coverage['on_block_destroy'].items():
+        status = "✓" if covered else "✗"
+        print(f"Branch {branch_id}: {status}")
