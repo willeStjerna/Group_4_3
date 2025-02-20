@@ -560,8 +560,8 @@ class ServerConnection(BaseConnection):
         self.protocol.update_entities()
 
     @register_packet_handler(loaders.BlockLine)
-    def on_block_line_recieved(self, contained, branch_coverage: dict) -> dict:
-        if not self.hp:
+    def on_block_line_recieved(self, contained, branch_coverage: dict) -> dict: # CCN+1 = 1
+        if not self.hp:                                                         # CCn+1 = 2
             # branch_coverage[] = True
             # print("Branch :  Returning early.")
             # return branch_coverage
@@ -573,7 +573,7 @@ class ServerConnection(BaseConnection):
             branch_coverage[2] = True
             print("Branch 2: Player is alive.")
 
-        if self.line_build_start_pos is None:
+        if self.line_build_start_pos is None:                                   # CCn+1 = 3
             branch_coverage[3] = True
             print("Branch 3: No start position exists. Returning early.")
             return branch_coverage
@@ -584,14 +584,14 @@ class ServerConnection(BaseConnection):
         current_time = reactor.seconds()
         last_time = self.last_block
         self.last_block = current_time
-        if (self.rapid_hack_detect and last_time is not None and
+        if (self.rapid_hack_detect and last_time is not None and                # CCn+3 = 6
                 current_time - last_time < TOOL_INTERVAL[BLOCK_TOOL]):
             self.rapids.record_event(current_time)
 
             branch_coverage[5] = True
             print("Branch 5: Rapid hack detected. Returning early.")
 
-            if self.rapids.above_limit():
+            if self.rapids.above_limit():                                       # CCn+1 = 7
                 log.info('RAPID HACK: {events}',
                          events=self.rapids.get_events())
                 self.on_hack_attempt('Rapid hack detected')
@@ -611,8 +611,8 @@ class ServerConnection(BaseConnection):
         pos = self.world_object.position
         start_pos = self.line_build_start_pos
 
-        if (not map_.is_valid_position(x1, y1, z1)
-                or not map_.is_valid_position(x2, y2, z2)):
+        if (not map_.is_valid_position(x1, y1, z1)                              # CCn+1 = 8
+                or not map_.is_valid_position(x2, y2, z2)):                     # CCn+1 = 9
             branch_coverage[9] = True
             print("Branch 9: Some position is not valid. Returning early.")
             return branch_coverage  # coordinates are out of bounds
@@ -622,7 +622,7 @@ class ServerConnection(BaseConnection):
 
         # ensure that the player is currently within tolerance of the location
         # that the line build ended at
-        if not collision_3d(pos.x, pos.y, pos.z, x2, y2, z2,
+        if not collision_3d(pos.x, pos.y, pos.z, x2, y2, z2,                    # CCn+1 = 10
                             MAX_BLOCK_DISTANCE):
             branch_coverage[11] = True
             print("Branch 11: Not close enough to block. Returning early.")
@@ -633,7 +633,7 @@ class ServerConnection(BaseConnection):
 
         # ensure that the player was within tolerance of the location
         # that the line build started at
-        if not collision_3d(start_pos.x, start_pos.y, start_pos.z, x1, y1, z1,
+        if not collision_3d(start_pos.x, start_pos.y, start_pos.z, x1, y1, z1,  # CCn+1 = 11
                             MAX_BLOCK_DISTANCE):
             branch_coverage[13] = True
             print("Branch 13: Not close enough to line build start position. Returning early.")
@@ -643,7 +643,7 @@ class ServerConnection(BaseConnection):
             print("Branch 14: Close enough to line build start position.")
 
         # check if block can be placed in that location
-        if not map_.has_neighbors(x1, y1, z1):
+        if not map_.has_neighbors(x1, y1, z1):                                  # CCn+1 = 12
             branch_coverage[15] = True
             print("Branch 15: First block doesn't have neighbors. Returning early.")
             return branch_coverage
@@ -651,7 +651,7 @@ class ServerConnection(BaseConnection):
             branch_coverage[16] = True
             print("Branch 16: First block has neighbors.")
 
-        if not map_.has_neighbors(x2, y2, z2):
+        if not map_.has_neighbors(x2, y2, z2):                                  # CCn+1 = 13
             branch_coverage[17] = True
             print("Branch 17: Second block doesn't have neighbors. Returning early.")
             return branch_coverage
@@ -661,7 +661,7 @@ class ServerConnection(BaseConnection):
 
         points = world.cube_line(x1, y1, z1, x2, y2, z2)
 
-        if not points:
+        if not points:                                                          # CCn+1 = 14
             branch_coverage[19] = True
             print("Branch 19: No points found. Returning early.")
             return branch_coverage
@@ -669,7 +669,7 @@ class ServerConnection(BaseConnection):
             branch_coverage[20] = True
             print("Branch 20: Points found.")
 
-        if len(points) > (self.blocks + BUILD_TOLERANCE):
+        if len(points) > (self.blocks + BUILD_TOLERANCE):                       # CCn+1 = 15
             branch_coverage[21] = True
             print("Branch 21: Too many points found. Returning early.")
             return branch_coverage
@@ -677,7 +677,7 @@ class ServerConnection(BaseConnection):
             branch_coverage[22] = True
             print("Branch 22: Allowed amount of points found.")
 
-        if self.on_line_build_attempt(points) is False:
+        if self.on_line_build_attempt(points) is False:                         # CCn+1 = 16
             branch_coverage[23] = True
             print("Branch 23: No line build attempt success. Returning early.")
             return branch_coverage
@@ -686,24 +686,25 @@ class ServerConnection(BaseConnection):
             print("Branch 24: Line build attempt success.")
 
 
-        for point in points:
+        for point in points:                                                    # CCn+1 = 17
             branch_coverage[25] = True
             print("Branch 25: Point found. Entering for-loop.")
             x, y, z = point
-            if map_.get_solid(x, y, z):
+            if map_.get_solid(x, y, z):                                         # CCn+1 = 18
                 branch_coverage[27] = True
                 print("Branch 27: Found solid.")
                 continue
             else:
                 branch_coverage[28] = True
                 print("Branch 28: No solid found.")
-            if not map_.build_point(x, y, z, self.color):
+            if not map_.build_point(x, y, z, self.color):                       # CCn+1 = 19
                 branch_coverage[29] = True
                 print("Branch 29: No build success.")
                 break
             else:
                 branch_coverage[30] = True
                 print("Branch 30: Build success.")
+        # Andre's function to collect branch_coverage by for loop
         if len(points) <= 0:
             branch_coverage[26] = True
             print("Branch 26: No point found. Did not enter for-loop.")
