@@ -561,14 +561,33 @@ class ServerConnection(BaseConnection):
 
     @register_packet_handler(loaders.BlockLine)
     def on_block_line_recieved(self, contained):
+        """
+        Requirements for this function to test for:
+        1. If the player is dead (self.hp < 0) it should return.
+        2. If the line build start position is not set (self.line_build_start_pos is None) it should return.
+        3. If a rapid hack is detected it should return.
+        4. If positions (contained.x1, contained.y1, contained.z1) and (contained.x2, contained.y2, contained.z2)
+            are not valid it should return.
+        5. If the player is not in range of start and end pos of the block it should return.
+        6. If the choose blocks does not have neighbors it should return.
+        7. If the no line should be drawn it should return.
+        8. If the number of blocks is too large it should return.
+        9. If the build failed it should return.
+        10. It Should skip building if a solid block already exists.
+        11. It should build a block on each valid position.
+        12. It should update the entities.
+        """
+        # 1. If the player is dead (self.hp < 0) it should return.
         if not self.hp:
             return  # dead players can't build
+        # 2. If the line build start position is not set (self.line_build_start_pos is None) it should return.
         if self.line_build_start_pos is None:
             return
 
         current_time = reactor.seconds()
         last_time = self.last_block
         self.last_block = current_time
+        # 3. If a rapid hack is detected it should return.
         if (self.rapid_hack_detect and last_time is not None and
                 current_time - last_time < TOOL_INTERVAL[BLOCK_TOOL]):
             self.rapids.record_event(current_time)
@@ -585,10 +604,13 @@ class ServerConnection(BaseConnection):
         pos = self.world_object.position
         start_pos = self.line_build_start_pos
 
+        # 4. If positions (contained.x1, contained.y1, contained.z1) and (contained.x2, contained.y2, contained.z2)
+        #    are not valid it should return.
         if (not map_.is_valid_position(x1, y1, z1)
                 or not map_.is_valid_position(x2, y2, z2)):
             return  # coordinates are out of bounds
 
+        # 5. If the player is not in range of start and end pos of the block it should return.
         # ensure that the player is currently within tolerance of the location
         # that the line build ended at
         if not collision_3d(pos.x, pos.y, pos.z, x2, y2, z2,
@@ -601,6 +623,7 @@ class ServerConnection(BaseConnection):
                             MAX_BLOCK_DISTANCE):
             return
 
+        # 6. If the choose blocks does not have neighbors it should return.
         # check if block can be placed in that location
         if not map_.has_neighbors(x1, y1, z1):
             return
@@ -610,22 +633,26 @@ class ServerConnection(BaseConnection):
 
         points = world.cube_line(x1, y1, z1, x2, y2, z2)
 
+        # 7. If the no line should be drawn it should return.
         if not points:
             return
-
+        # 8. If the number of blocks is too large it should return.
         if len(points) > (self.blocks + BUILD_TOLERANCE):
             return
-
+        # 9. If the build failed it should return.
         if self.on_line_build_attempt(points) is False:
             return
 
         for point in points:
             x, y, z = point
+            # 10. It Should skip building if a solid block already exists.
             if map_.get_solid(x, y, z):
                 continue
+            # 11. It should build a block on each valid position.
             if not map_.build_point(x, y, z, self.color):
                 break
 
+        # 12. It should update the entities.
         self.blocks -= len(points)
         self.on_line_build(points)
         contained.player_id = self.player_id
