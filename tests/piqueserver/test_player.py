@@ -57,5 +57,9 @@ class TestPlayer(unittest.TestCase):
         self.protocol.map_info.on_block_destroy = None
         
         # Test for GRENADE_DESTROY mode with indestructable returning False
+        # Make (0,0,0) indestructible
+        def is_indestructable(x, y, z):
+            return x == 0 and y == 0 and z == 0
+        self.protocol.is_indestructable = Mock(side_effect=is_indestructable)
         result = self.player.on_block_destroy(0, 0, 0, GRENADE_DESTROY)
         self.assertFalse(result)
