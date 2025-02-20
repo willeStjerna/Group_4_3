@@ -244,7 +244,7 @@ class TestOnBlockLineRecieved(unittest.TestCase):
     @patch('twisted.internet.reactor.seconds', return_value=10)
     def test_rapid_hack_detection(self, mock_seconds):
         """
-        Requirement #3: 3. If a rapid hack is detected it should return.
+        Requirement 3. If a rapid hack is detected it should return.
         We simulate a call that came in just after the last one and check if 'record_event' is invoked
         and that it does not call update_entities.
         """
