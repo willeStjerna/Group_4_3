@@ -124,11 +124,123 @@ It is complete manually written, so one would have to add lines to each instance
 It is not entirely consistent. It could be that coverage.py does not count going into a for loop or not as 2 different branches.
 
 # Coverage improvement
-Report of old coverage: 
 
-https://github.com/willeStjerna/Group_4_3/blob/master/coverage_report_old.pdf 
+Below are the total coverage reports before and after adding our tests. The reports are calculated using the pytest coverage tool.
 
-Report of new coverage: [link]
+# Report of old coverage:
+
+| Name | Stmts | Miss | Branch | BrPart | Cover |
+|------|-------|------|--------|--------|-------|
+| piqueserver/__init__.py | 1 | 0 | 0 | 0 | 100% |
+| piqueserver/__main__.py | 3 | 3 | 2 | 0 | 0% |
+| piqueserver/_version.py | 11 | 2 | 2 | 1 | 77% |
+| piqueserver/auth.py | 9 | 2 | 0 | 0 | 78% |
+| piqueserver/banpublish.py | 25 | 25 | 4 | 0 | 0% |
+| piqueserver/bansubscribe.py | 56 | 10 | 12 | 3 | 78% |
+| piqueserver/commands.py | 230 | 157 | 80 | 2 | 27% |
+| piqueserver/config.py | 149 | 3 | 48 | 2 | 97% |
+| piqueserver/console.py | 63 | 44 | 16 | 1 | 25% |
+| piqueserver/core_commands/__init__.py | 8 | 0 | 0 | 0 | 100% |
+| piqueserver/core_commands/game.py | 147 | 116 | 44 | 0 | 16% |
+| piqueserver/core_commands/info.py | 41 | 27 | 16 | 0 | 25% |
+| piqueserver/core_commands/map.py | 66 | 48 | 4 | 0 | 26% |
+| piqueserver/core_commands/moderation.py | 222 | 156 | 54 | 1 | 28% |
+| piqueserver/core_commands/movement.py | 89 | 68 | 26 | 0 | 18% |
+| piqueserver/core_commands/player.py | 57 | 41 | 22 | 0 | 20% |
+| piqueserver/core_commands/server.py | 43 | 28 | 10 | 0 | 28% |
+| piqueserver/core_commands/social.py | 40 | 32 | 22 | 0 | 13% |
+| piqueserver/extensions.py | 47 | 8 | 14 | 1 | 82% |
+| piqueserver/irc.py | 250 | 155 | 58 | 0 | 31% |
+| piqueserver/map.py | 107 | 81 | 18 | 0 | 21% |
+| piqueserver/networkdict.py | 62 | 3 | 16 | 3 | 92% |
+| piqueserver/player.py | 294 | 247 | 154 | 0 | 10% |
+| piqueserver/release.py | 28 | 14 | 2 | 0 | 47% |
+| piqueserver/run.py | 144 | 117 | 48 | 2 | 18% |
+| piqueserver/scheduler.py | 30 | 21 | 8 | 0 | 24% |
+| piqueserver/server.py | 586 | 399 | 146 | 1 | 26% |
+| piqueserver/ssh.py | 42 | 31 | 0 | 0 | 26% |
+| piqueserver/statistics.py | 108 | 53 | 22 | 4 | 47% |
+| piqueserver/statusserver.py | 76 | 28 | 6 | 0 | 59% |
+| piqueserver/utils/__init__.py | 2 | 0 | 0 | 0 | 100% |
+| piqueserver/utils/_async.py | 42 | 29 | 10 | 0 | 25% |
+| piqueserver/utils/_timeparse.py | 42 | 0 | 12 | 0 | 100% |
+| piqueserver/version.py | 3 | 0 | 0 | 0 | 100% |
+| piqueserver/web/__init__.py | 0 | 0 | 0 | 0 | 100% |
+| pyspades/__init__.py | 6 | 0 | 0 | 0 | 100% |
+| pyspades/collision.py | 17 | 12 | 0 | 0 | 29% |
+| pyspades/color.py | 21 | 0 | 0 | 0 | 100% |
+| pyspades/constants.py | 42 | 0 | 0 | 0 | 100% |
+| pyspades/entities.py | 124 | 92 | 32 | 0 | 21% |
+| pyspades/gamemodes.py | 109 | 84 | 26 | 0 | 19% |
+| pyspades/mapgenerator.py | 52 | 34 | 12 | 0 | 28% |
+| pyspades/master.py | 119 | 73 | 24 | 1 | 33% |
+| pyspades/player.py | 1101 | 878 | 464 | 11 | 15% |
+| pyspades/protocol.py | 122 | 92 | 34 | 0 | 19% |
+| pyspades/server.py | 323 | 224 | 104 | 0 | 23% |
+| pyspades/team.py | 72 | 45 | 24 | 0 | 28% |
+| pyspades/tools.py | 23 | 20 | 4 | 0 | 11% |
+| pyspades/types.py | 34 | 8 | 8 | 0 | 71% |
+| pyspades/weapon.py | 110 | 50 | 24 | 1 | 46% |
+| **TOTAL** | **5398** | **3560** | **1632** | **34** | **28%** |
+
+# Report of new coverage:
+
+| Name | Stmts | Miss | Branch | BrPart | Cover |
+|------|-------|------|--------|--------|-------|
+| piqueserver/__init__.py | 1 | 0 | 0 | 0 | 100% |
+| piqueserver/__main__.py | 3 | 3 | 2 | 0 | 0% |
+| piqueserver/_version.py | 11 | 2 | 2 | 1 | 77% |
+| piqueserver/auth.py | 9 | 2 | 0 | 0 | 78% |
+| piqueserver/banpublish.py | 25 | 25 | 4 | 0 | 0% |
+| piqueserver/bansubscribe.py | 56 | 10 | 12 | 3 | 78% |
+| piqueserver/commands.py | 230 | 148 | 80 | 5 | 31% |
+| piqueserver/config.py | 149 | 3 | 48 | 2 | 97% |
+| piqueserver/console.py | 63 | 44 | 16 | 1 | 25% |
+| piqueserver/core_commands/__init__.py | 8 | 0 | 0 | 0 | 100% |
+| piqueserver/core_commands/game.py | 147 | 116 | 44 | 0 | 16% |
+| piqueserver/core_commands/info.py | 41 | 27 | 16 | 0 | 25% |
+| piqueserver/core_commands/map.py | 66 | 48 | 4 | 0 | 26% |
+| piqueserver/core_commands/moderation.py | 222 | 156 | 54 | 1 | 28% |
+| piqueserver/core_commands/movement.py | 89 | 38 | 26 | 5 | 54% |
+| piqueserver/core_commands/player.py | 57 | 41 | 22 | 0 | 20% |
+| piqueserver/core_commands/server.py | 43 | 28 | 10 | 0 | 28% |
+| piqueserver/core_commands/social.py | 40 | 32 | 22 | 0 | 13% |
+| piqueserver/extensions.py | 47 | 8 | 14 | 1 | 82% |
+| piqueserver/irc.py | 250 | 155 | 58 | 0 | 31% |
+| piqueserver/map.py | 107 | 81 | 18 | 0 | 21% |
+| piqueserver/networkdict.py | 62 | 3 | 16 | 3 | 92% |
+| piqueserver/player.py | 294 | 210 | 154 | 7 | 23% |
+| piqueserver/release.py | 28 | 14 | 2 | 0 | 47% |
+| piqueserver/run.py | 144 | 117 | 48 | 2 | 18% |
+| piqueserver/scheduler.py | 30 | 21 | 8 | 0 | 24% |
+| piqueserver/server.py | 586 | 399 | 146 | 1 | 26% |
+| piqueserver/ssh.py | 42 | 31 | 0 | 0 | 26% |
+| piqueserver/statistics.py | 108 | 53 | 22 | 4 | 47% |
+| piqueserver/statusserver.py | 76 | 28 | 6 | 0 | 59% |
+| piqueserver/utils/__init__.py | 2 | 0 | 0 | 0 | 100% |
+| piqueserver/utils/_async.py | 42 | 29 | 10 | 0 | 25% |
+| piqueserver/utils/_timeparse.py | 42 | 0 | 12 | 0 | 100% |
+| piqueserver/version.py | 3 | 0 | 0 | 0 | 100% |
+| piqueserver/web/__init__.py | 0 | 0 | 0 | 0 | 100% |
+| pyspades/__init__.py | 6 | 0 | 0 | 0 | 100% |
+| pyspades/collision.py | 17 | 11 | 0 | 0 | 35% |
+| pyspades/color.py | 21 | 0 | 0 | 0 | 100% |
+| pyspades/constants.py | 42 | 0 | 0 | 0 | 100% |
+| pyspades/entities.py | 124 | 92 | 32 | 0 | 21% |
+| pyspades/gamemodes.py | 109 | 84 | 26 | 0 | 19% |
+| pyspades/mapgenerator.py | 52 | 34 | 12 | 0 | 28% |
+| pyspades/master.py | 119 | 73 | 24 | 1 | 33% |
+| pyspades/player.py | 1097 | 789 | 464 | 26 | 23% |
+| pyspades/protocol.py | 122 | 85 | 34 | 2 | 25% |
+| pyspades/server.py | 323 | 224 | 104 | 0 | 23% |
+| pyspades/team.py | 72 | 45 | 24 | 0 | 28% |
+| pyspades/tools.py | 23 | 20 | 4 | 0 | 11% |
+| pyspades/types.py | 34 | 8 | 8 | 0 | 71% |
+| pyspades/weapon.py | 110 | 50 | 24 | 1 | 46% |
+| **TOTAL** | **5394** | **3387** | **1632** | **66** | **32%** |
+
+Overall our new tests improved the coverage from 28% to 32%.
+
 
 **Function1:**
 
